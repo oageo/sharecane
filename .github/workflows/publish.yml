@@ -10,6 +10,12 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# GitHub Actionsの権限設定
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
 jobs:
   check-version:
     name: バージョンアップをチェック
