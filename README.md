@@ -65,7 +65,7 @@
 | `{{ title }}<br>{{ url }}` | Nuxt/Contentから11tyへ切り替えた - osumiakari.jp<br>https://www.osumiakari.jp/articles/20250724-change-to-11ty/ |
 | `{{ og.site_name }} - {{ og.title }} / {{ url }} by {{ og.twitter_creator }}` | Osumi Akari.jp - Nuxt/Contentから11tyへ切り替えた / https://www.osumiakari.jp/articles/20250724-change-to-11ty/ by @Kig_OsumiAkari |
 | `{{ og.title }} on {{og.site_name}} {{ url }} #oapicks #blog #{{ og.type }}` | Nuxt/Contentから11tyへ切り替えた on Osumi Akari.jp https://www.osumiakari.jp/articles/20250724-change-to-11ty/ #oapicks #blog #article |
-| `このサイト（{{ domain }}）のビューポートとしては「{{ meta.viewport }}」が指定されています。いい感じですね。` | このサイト（www.osumiakari.jp）のビューポートとしては「width=device-width, initial-scale=1」が指定されています。いい感じですね。 |
+| `このサイト（ {{ domain }} ）のビューポートとしては「{{ meta.viewport }}」が指定されています。いい感じですね。` | このサイト（ www.osumiakari.jp ）のビューポートとしては「width=device-width, initial-scale=1」が指定されています。いい感じですね。 |
 
 ## ロゴ
 ![sharecane logo](https://raw.githubusercontent.com/oageo/sharecane/main/public/sharecane.svg)
