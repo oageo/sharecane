@@ -1,0 +1,161 @@
+name: 拡張機能パブリッシュ
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+
+# 同じPRに対する重複実行を防ぐ
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# GitHub Actionsの権限設定
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  check-version:
+    name: バージョンアップをチェック
+    runs-on: ubuntu-latest
+    outputs:
+      version-changed: ${{ steps.check.outputs.changed }}
+      current-version: ${{ steps.check.outputs.current-version }}
+    steps:
+      - name: コードをチェックアウト
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: バージョン変更をチェック
+        id: check
+        run: |
+          # package.jsonから現在のバージョンを取得
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          echo "current-version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          
+          # mainブランチからバージョンを取得
+          git fetch origin main
+          MAIN_VERSION=$(git show origin/main:package.json | node -p "JSON.parse(require('fs').readFileSync('/dev/stdin', 'utf8')).version")
+          
+          echo "現在のバージョン: $CURRENT_VERSION"
+          echo "mainブランチのバージョン: $MAIN_VERSION"
+          
+          # 基本的な文字列比較と手動セマンティックバージョンロジックを使用してバージョンを比較
+          if [ "$CURRENT_VERSION" != "$MAIN_VERSION" ]; then
+            # 外部依存関係なしでのシンプルなセマンティックバージョン比較
+            VERSION_GREATER=$(node -e "
+              function compareVersions(current, main) {
+                const currentParts = current.split('.').map(Number);
+                const mainParts = main.split('.').map(Number);
+                
+                for (let i = 0; i < Math.max(currentParts.length, mainParts.length); i++) {
+                  const currentPart = currentParts[i] || 0;
+                  const mainPart = mainParts[i] || 0;
+                  
+                  if (currentPart > mainPart) return true;
+                  if (currentPart < mainPart) return false;
+                }
+                return false;
+              }
+              
+              const current = '$CURRENT_VERSION';
+              const main = '$MAIN_VERSION';
+              console.log(compareVersions(current, main) ? 'true' : 'false');
+            ")
+            
+            if [ "$VERSION_GREATER" = "true" ]; then
+              echo "バージョンが $MAIN_VERSION から $CURRENT_VERSION にアップされました"
+              echo "changed=true" >> $GITHUB_OUTPUT
+            else
+              echo "バージョン変更が検出されましたが、適切なアップではありません: $MAIN_VERSION -> $CURRENT_VERSION"
+              echo "changed=false" >> $GITHUB_OUTPUT
+              exit 1
+            fi
+          else
+            echo "バージョン変更が検出されませんでした"
+            echo "changed=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+  build-and-publish:
+    name: 拡張機能をビルドしてパブリッシュ
+    runs-on: ubuntu-latest
+    needs: check-version
+    if: needs.check-version.outputs.version-changed == 'true'
+    steps:
+      - name: コードをチェックアウト
+        uses: actions/checkout@v4
+
+      - name: Node.jsをセットアップ
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: 依存関係をインストール
+        run: npm ci
+
+      - name: 拡張機能パッケージを作成
+        run: |
+          npm run zip
+          npm run zip:firefox
+
+      - name: ブラウザストアに投稿
+        if: github.event.pull_request.merged == true
+        run: |
+          npx wxt submit \
+            --chrome-zip .output/*-chrome.zip \
+            --firefox-zip .output/*-firefox.zip \
+            --firefox-sources-zip .output/*-sources.zip
+        env:
+          # Chrome Web Store 認証情報
+          CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
+          CHROME_CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
+          CHROME_CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
+          CHROME_REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
+          
+          # Firefox Add-ons 認証情報
+          FIREFOX_EXTENSION_ID: ${{ secrets.FIREFOX_EXTENSION_ID }}
+          FIREFOX_JWT_ISSUER: ${{ secrets.FIREFOX_JWT_ISSUER }}
+          FIREFOX_JWT_SECRET: ${{ secrets.FIREFOX_JWT_SECRET }}
+
+      - name: ドライラン投稿（テスト用）
+        if: github.event.pull_request.merged != true
+        run: |
+          npx wxt submit --dry-run \
+            --chrome-zip .output/*-chrome.zip \
+            --firefox-zip .output/*-firefox.zip \
+            --firefox-sources-zip .output/*-sources.zip
+
+      - name: Chrome ビルド成果物をアップロード
+        uses: actions/upload-artifact@v4
+        with:
+          name: chrome-extension-v${{ needs.check-version.outputs.current-version }}
+          path: .output/*-chrome.zip
+
+      - name: Firefox ビルド成果物をアップロード
+        uses: actions/upload-artifact@v4
+        with:
+          name: firefox-extension-v${{ needs.check-version.outputs.current-version }}
+          path: .output/*-firefox.zip
+
+      - name: Firefox ソース成果物をアップロード
+        uses: actions/upload-artifact@v4
+        with:
+          name: firefox-sources-v${{ needs.check-version.outputs.current-version }}
+          path: .output/*-sources.zip
+
+      - name: PRにコメント
+        if: github.event.pull_request.merged == true
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `🚀 拡張機能 v${{ needs.check-version.outputs.current-version }} が正常にパブリッシュされました！\n\n- Chrome Web Store: パブリッシュ進行中\n- Firefox Add-ons: パブリッシュ進行中\n\nビルド成果物はワークフロー実行からダウンロードできます。`
+            });

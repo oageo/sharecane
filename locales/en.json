@@ -1,0 +1,17 @@
+{
+  "title": "ShareCane",
+  "shareTemplate": "Share Template",
+  "templatePlaceholder": "Example: {{ title }}<br>{{ url }}",
+  "exampleToggle": "Show Examples",
+  "basicInfo": "Basic Info",
+  "metaInfo": "Meta Tags",
+  "ogpInfo": "OGP Info",
+  "twitterCard": "Twitter Card",
+  "preview": "Preview",
+  "previewPlaceholder": "Please enter a template",
+  "copy": "Copy",
+  "pageInfo": "Page Info",
+  "loading": "Loading...",
+  "copied": "Copied!",
+  "copyError": "Error"
+}

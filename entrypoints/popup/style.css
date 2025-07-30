@@ -1,0 +1,21 @@
+@import 'bulma/css/bulma.min.css';
+
+/* プレビューエリアの調整 */
+#preview {
+  word-break: break-all;
+}
+
+#page-info .info-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+#page-info .info-section div {
+  margin-bottom: 0.25rem;
+  word-break: break-all;
+}
+
+/* コピーステータス */
+#copy-status:empty {
+  display: none;
+}

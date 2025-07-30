@@ -1,0 +1,173 @@
+name: ビルドテスト
+
+on:
+  push:
+    branches-ignore: [main]
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+
+# 同じPRに対する重複実行を防ぐ
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# GitHub Actionsの権限設定
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  build-test:
+    name: ビルドテスト
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [20, 22]
+    steps:
+      - name: コードをチェックアウト
+        uses: actions/checkout@v4
+
+      - name: Node.js ${{ matrix.node-version }} をセットアップ
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: 依存関係をインストール
+        run: npm ci
+
+      - name: TypeScript コンパイラーチェックを実行
+        run: npm run compile
+
+      - name: Chrome拡張機能をビルド
+        run: npm run build
+
+      - name: Firefox拡張機能をビルド
+        run: npm run build:firefox
+
+      - name: ビルド出力を検証
+        run: |
+          # Chromeビルドが成功したかチェック
+          if [ ! -f ".output/chrome-mv3/manifest.json" ]; then
+            echo "❌ Chromeビルドが失敗しました: manifest.json が見つかりません"
+            exit 1
+          fi
+          
+          if [ ! -f ".output/chrome-mv3/popup.html" ]; then
+            echo "❌ Chromeビルドが失敗しました: popup.html が見つかりません"
+            exit 1
+          fi
+          
+          if [ ! -f ".output/chrome-mv3/background.js" ]; then
+            echo "❌ Chromeビルドが失敗しました: background.js が見つかりません"
+            exit 1
+          fi
+          
+          if [ ! -f ".output/chrome-mv3/content-scripts/content.js" ]; then
+            echo "❌ Chromeビルドが失敗しました: content.js が見つかりません"
+            exit 1
+          fi
+          
+          # Firefoxビルドが成功したかチェック
+          if [ ! -f ".output/firefox-mv2/manifest.json" ]; then
+            echo "❌ Firefoxビルドが失敗しました: manifest.json が見つかりません"
+            exit 1
+          fi
+          
+          echo "✅ すべてのビルドが正常に完了しました"
+
+      - name: バンドルサイズをチェック
+        run: |
+          echo "📦 ビルドサイズ:"
+          echo "Chrome拡張機能:"
+          du -sh .output/chrome-mv3
+          echo "Firefox拡張機能:"
+          du -sh .output/firefox-mv2
+          
+          # CSSが最適化されているかチェック（PurgeCSS後は200KB以下になるべき）
+          CHROME_CSS_SIZE=$(find .output/chrome-mv3 -name "*.css" -exec du -b {} + | awk '{sum+=$1} END {print sum}')
+          FIREFOX_CSS_SIZE=$(find .output/firefox-mv2 -name "*.css" -exec du -b {} + | awk '{sum+=$1} END {print sum}')
+          
+          echo "Chrome CSS合計サイズ: ${CHROME_CSS_SIZE} バイト"
+          echo "Firefox CSS合計サイズ: ${FIREFOX_CSS_SIZE} バイト"
+          
+          if [ "$CHROME_CSS_SIZE" -gt 204800 ]; then  # 200KB in bytes
+            echo "⚠️ Chrome CSSサイズが予想より大きいです。PurgeCSSが正常に動作していない可能性があります。"
+          fi
+          
+          if [ "$FIREFOX_CSS_SIZE" -gt 204800 ]; then  # 200KB in bytes
+            echo "⚠️ Firefox CSSサイズが予想より大きいです。PurgeCSSが正常に動作していない可能性があります。"
+          fi
+
+      - name: Chromeビルド成果物をアップロード
+        uses: actions/upload-artifact@v4
+        with:
+          name: chrome-extension-build-node${{ matrix.node-version }}-${{ github.run_number }}
+          path: .output/chrome-mv3/
+          retention-days: 7
+
+      - name: Firefoxビルド成果物をアップロード
+        uses: actions/upload-artifact@v4
+        with:
+          name: firefox-extension-build-node${{ matrix.node-version }}-${{ github.run_number }}
+          path: .output/firefox-mv2/
+          retention-days: 7
+
+  lint-and-format:
+    name: リントとフォーマットチェック
+    runs-on: ubuntu-latest
+    steps:
+      - name: コードをチェックアウト
+        uses: actions/checkout@v4
+
+      - name: Node.jsをセットアップ
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: 依存関係をインストール
+        run: npm ci
+
+      - name: TypeScript型チェックを実行
+        run: npm run compile
+
+      - name: 潜在的なセキュリティ問題をチェック
+        run: |
+          # ハードコードされたシークレットやAPIキーをチェック
+          echo "🔍 潜在的なセキュリティ問題をスキャンしています..."
+          
+          # 一般的なシークレットパターンをチェック（ワークフローファイルは除外、これらは正当にsecretsを参照するため）
+          if grep -r -i "api.key\|secret\|password\|token" --include="*.ts" --include="*.js" --exclude-dir="node_modules" --exclude-dir=".github" . | grep -v "// Safe:" | grep -v "# Safe:"; then
+            echo "⚠️ 潜在的なシークレットが見つかりました。上記のマッチを確認してください。"
+            echo "これらが安全な場合は、'// Safe:' または '# Safe:' コメントを追加してこの警告を抑制してください。"
+          else
+            echo "✅ 潜在的なシークレットは検出されませんでした"
+          fi
+          
+          # eval()の使用をチェック
+          if grep -r "eval(" --include="*.ts" --include="*.js" --exclude-dir="node_modules" .; then
+            echo "❌ eval()の使用が検出されました - 潜在的なセキュリティリスクです"
+            exit 1
+          else
+            echo "✅ eval()の使用は検出されませんでした"
+          fi
+
+  comment-on-pr:
+    name: PRにコメント
+    runs-on: ubuntu-latest
+    needs: [build-test, lint-and-format]
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: ビルド成功をコメント
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `✅ ビルドテストが正常に完了しました！\n\n- TypeScriptコンパイル: ✅\n- Chrome拡張機能ビルド: ✅\n- Firefox拡張機能ビルド: ✅\n- セキュリティチェック: ✅\n\nビルド成果物はワークフロー実行からダウンロードできます。`
+            });
