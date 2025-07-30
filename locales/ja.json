@@ -1,0 +1,17 @@
+{
+  "title": "ShareCane",
+  "shareTemplate": "共有文章のテンプレート",
+  "templatePlaceholder": "例: {{ title }}<br>{{ url }}",
+  "exampleToggle": "一例を表示",
+  "basicInfo": "基本情報",
+  "metaInfo": "Metaタグ情報",
+  "ogpInfo": "OGP情報",
+  "twitterCard": "Twitter Card",
+  "preview": "プレビュー",
+  "previewPlaceholder": "テンプレートを入力してください",
+  "copy": "コピー",
+  "pageInfo": "ページ情報",
+  "loading": "読み込み中…",
+  "copied": "コピーしました",
+  "copyError": "エラー"
+}
