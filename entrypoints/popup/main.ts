@@ -57,12 +57,25 @@ class ShareCanePopup {
     // 例の内容を更新
     const exampleContent = document.querySelector('details .content');
     if (exampleContent) {
-      exampleContent.innerHTML = `
-        <p><strong>${i18n.t('basicInfo')}:</strong> {{ title }}、{{ url }}、{{ domain }}</p>
-        <p><strong>${i18n.t('metaInfo')}:</strong> {{ meta.description }}、{{ meta.keywords }}、{{ meta.author }}</p>
-        <p><strong>${i18n.t('ogpInfo')}:</strong> {{ og.title }}、{{ og.description }}、{{ og.url }}、{{ og.site_name }}</p>
-        <p><strong>${i18n.t('twitterCard')}:</strong> {{ og.twitter_card }}、{{ og.twitter_site }}</p>
-      `;
+      // 既存の内容をクリア
+      exampleContent.textContent = '';
+      
+      // 各例を安全に作成
+      const examples = [
+        { label: i18n.t('basicInfo'), content: '{{ title }}、{{ url }}、{{ domain }}' },
+        { label: i18n.t('metaInfo'), content: '{{ meta.description }}、{{ meta.keywords }}、{{ meta.author }}' },
+        { label: i18n.t('ogpInfo'), content: '{{ og.title }}、{{ og.description }}、{{ og.url }}、{{ og.site_name }}' },
+        { label: i18n.t('twitterCard'), content: '{{ og.twitter_card }}、{{ og.twitter_site }}' }
+      ];
+      
+      examples.forEach(example => {
+        const p = document.createElement('p');
+        const strong = document.createElement('strong');
+        strong.textContent = example.label + ': ';
+        p.appendChild(strong);
+        p.appendChild(document.createTextNode(example.content));
+        exampleContent.appendChild(p);
+      });
     }
 
     // ページ情報セクションのサマリーを更新
@@ -104,8 +117,8 @@ class ShareCanePopup {
       this.updatePreview();
     } catch (error) {
       console.error('Failed to load page info:', error);
-      this.pageInfoArea.innerHTML = i18n.t('loading');
-      this.previewArea.innerHTML = i18n.t('loading');
+      this.pageInfoArea.textContent = i18n.t('loading');
+      this.previewArea.textContent = i18n.t('loading');
     }
   }
 
@@ -113,87 +126,114 @@ class ShareCanePopup {
     if (!this.currentPageInfo) return;
 
     const info = this.currentPageInfo;
-    let html = `
-      <div class="info-section">
-        <strong>${i18n.t('basicInfo')}:</strong>
-        <div><strong>title:</strong> ${this.escapeHtml(info.title)}</div>
-        <div><strong>url:</strong> ${this.escapeHtml(info.url)}</div>
-        <div><strong>domain:</strong> ${this.escapeHtml(info.domain)}</div>
-      </div>
-    `;
+    
+    // 既存の内容をクリア
+    this.pageInfoArea.textContent = '';
+
+    // 基本情報セクションを作成
+    const basicSection = this.createInfoSection(i18n.t('basicInfo'), [
+      { key: 'title', value: info.title },
+      { key: 'url', value: info.url },
+      { key: 'domain', value: info.domain }
+    ]);
+    this.pageInfoArea.appendChild(basicSection);
 
     // Meta情報がある場合は表示
     const metaInfo = info.meta;
     const hasMetaInfo = Object.keys(metaInfo).length > 0;
     
     if (hasMetaInfo) {
-      html += `
-        <div class="info-section">
-          <strong>${i18n.t('metaInfo')}:</strong>
-          ${Object.entries(metaInfo).map(([key, value]) => 
-            `<div><strong>meta.${key}:</strong> ${this.escapeHtml(value)}</div>`
-          ).join('')}
-        </div>
-      `;
+      const metaEntries = Object.entries(metaInfo).map(([key, value]) => ({
+        key: `meta.${key}`,
+        value: value
+      }));
+      const metaSection = this.createInfoSection(i18n.t('metaInfo'), metaEntries);
+      this.pageInfoArea.appendChild(metaSection);
     }
 
     // OGP情報がある場合は表示
     const ogInfo = info.og;
-    const ogEntries = Object.entries(ogInfo).filter(([key, value]) => value && !key.startsWith('twitter_'));
+    const ogEntries = Object.entries(ogInfo)
+      .filter(([key, value]) => value && !key.startsWith('twitter_'))
+      .map(([key, value]) => ({ key: `og.${key}`, value: value }));
     
     if (ogEntries.length > 0) {
-      html += `
-        <div class="info-section">
-          <strong>${i18n.t('ogpInfo')}:</strong>
-          ${ogEntries.map(([key, value]) => 
-            `<div><strong>og.${key}:</strong> ${this.escapeHtml(value)}</div>`
-          ).join('')}
-        </div>
-      `;
+      const ogSection = this.createInfoSection(i18n.t('ogpInfo'), ogEntries);
+      this.pageInfoArea.appendChild(ogSection);
     }
 
     // Twitter Card情報がある場合は表示
-    const twitterEntries = Object.entries(ogInfo).filter(([key, value]) => value && key.startsWith('twitter_'));
+    const twitterEntries = Object.entries(ogInfo)
+      .filter(([key, value]) => value && key.startsWith('twitter_'))
+      .map(([key, value]) => ({ key: `og.${key}`, value: value }));
     
     if (twitterEntries.length > 0) {
-      html += `
-        <div class="info-section">
-          <strong>${i18n.t('twitterCard')}:</strong>
-          ${twitterEntries.map(([key, value]) => 
-            `<div><strong>og.${key}:</strong> ${this.escapeHtml(value)}</div>`
-          ).join('')}
-        </div>
-      `;
+      const twitterSection = this.createInfoSection(i18n.t('twitterCard'), twitterEntries);
+      this.pageInfoArea.appendChild(twitterSection);
     }
+  }
 
-    this.pageInfoArea.innerHTML = html;
+  private createInfoSection(title: string, entries: { key: string; value: string }[]): HTMLDivElement {
+    const section = document.createElement('div');
+    section.className = 'info-section';
+
+    const titleElement = document.createElement('strong');
+    titleElement.textContent = title + ':';
+    section.appendChild(titleElement);
+
+    entries.forEach(entry => {
+      const div = document.createElement('div');
+      const keyElement = document.createElement('strong');
+      keyElement.textContent = entry.key + ': ';
+      div.appendChild(keyElement);
+      div.appendChild(document.createTextNode(entry.value));
+      section.appendChild(div);
+    });
+
+    return section;
   }
 
   private updatePreview(): void {
     const template = this.templateInput.value.trim();
     
     if (!template) {
-      this.previewArea.innerHTML = i18n.t('previewPlaceholder');
+      this.previewArea.textContent = i18n.t('previewPlaceholder');
       this.copyButton.disabled = true;
       return;
     }
 
     if (!this.currentPageInfo) {
-      this.previewArea.innerHTML = i18n.t('loading');
+      this.previewArea.textContent = i18n.t('loading');
       this.copyButton.disabled = true;
       return;
     }
 
     try {
       this.renderedContent = TemplateEngine.render(template, this.currentPageInfo);
-      // <br>をHTMLとして表示するため、innerHTML を使用
-      this.previewArea.innerHTML = this.renderedContent;
+      // <br>タグを安全に処理してプレビューに表示
+      this.displayRenderedContent(this.renderedContent);
       this.copyButton.disabled = false;
     } catch (error) {
       console.error('Template rendering failed:', error);
-      this.previewArea.innerHTML = i18n.t('copyError');
+      this.previewArea.textContent = i18n.t('copyError');
       this.copyButton.disabled = true;
     }
+  }
+
+  private displayRenderedContent(content: string): void {
+    // 内容をクリア
+    this.previewArea.textContent = '';
+    
+    // <br>で分割して安全に表示
+    const parts = content.split('<br>');
+    parts.forEach((part, index) => {
+      if (index > 0) {
+        // 改行を追加
+        this.previewArea.appendChild(document.createElement('br'));
+      }
+      // テキストを安全に追加（空文字列でも追加する）
+      this.previewArea.appendChild(document.createTextNode(part));
+    });
   }
 
   private async copyToClipboard(): Promise<void> {
@@ -253,11 +293,6 @@ class ShareCanePopup {
     }
   }
 
-  private escapeHtml(text: string): string {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-  }
 }
 
 // ポップアップが読み込まれたときに初期化
