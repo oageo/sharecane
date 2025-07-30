@@ -5,6 +5,11 @@ on:
     branches: [main]
     types: [opened, synchronize, reopened]
 
+# 同じPRに対する重複実行を防ぐ
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   check-version:
     name: バージョンアップをチェック
