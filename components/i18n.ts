@@ -17,6 +17,11 @@ type TranslationKeys = {
   loading: string;
   copied: string;
   copyError: string;
+  // プロファイル関連
+  newProfilePlaceholder: string;
+  newProfileCreate: string;
+  newProfileCancel: string;
+  newProfileDefaultName: string;
 };
 
 class I18n {
@@ -40,7 +45,11 @@ class I18n {
       pageInfo: 'ページ情報',
       loading: '読み込み中…',
       copied: 'コピーしました',
-      copyError: 'エラー'
+      copyError: 'エラー',
+      newProfilePlaceholder: 'プロファイル名を入力',
+      newProfileCreate: '作成',
+      newProfileCancel: 'キャンセル',
+      newProfileDefaultName: '新しいプロファイル',
     });
 
     this.translations.set('en', {
@@ -58,7 +67,11 @@ class I18n {
       pageInfo: 'Page Info',
       loading: 'Loading...',
       copied: 'Copied!',
-      copyError: 'Error'
+      copyError: 'Error',
+      newProfilePlaceholder: 'Enter profile name',
+      newProfileCreate: 'Create',
+      newProfileCancel: 'Cancel',
+      newProfileDefaultName: 'New Profile',
     });
   }
 

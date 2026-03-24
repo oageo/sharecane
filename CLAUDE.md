@@ -40,6 +40,21 @@ This project uses WXT, a modern web extension framework that provides:
 
 ### Components
 - `components/counter.ts` - Reusable UI components (currently contains demo counter)
+- `components/template.ts` - Mustache-style template engine and `PageInfo` type definitions
+- `components/i18n.ts` - Internationalization (ja/en), loaded from `browser.storage.local`
+- `components/profiles.ts` - Profile management (`ProfileManager` class). Profiles are stored in `browser.storage.local` as `profiles: Profile[]` and `activeProfileId: string`. Each profile has `{ id, name, template }`.
+- `components/migration.ts` - Storage schema migration system. Runs on every popup open and applies pending migrations based on `storageVersion` key. Add new migrations here when changing storage schema.
+
+### Storage Schema
+| Key | Type | Description |
+|---|---|---|
+| `storageVersion` | `number` | Internal schema version (not package version). Currently `1`. |
+| `profiles` | `Profile[]` | All profiles. Added in v0.2.0. |
+| `activeProfileId` | `string` | ID of the currently active profile. |
+| `locale` | `'ja' \| 'en'` | UI language setting. |
+
+#### Migration history
+- storageVersion 0 → 1 (v0.1.x → v0.2.0): Migrates legacy `template` string key into the first profile named "デフォルト"/"Default".
 
 ### Configuration
 - `wxt.config.ts` - WXT framework configuration (currently using defaults)
