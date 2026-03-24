@@ -1,6 +1,6 @@
 {
   "title": "ShareCane",
-  "shareTemplate": "共有文章のテンプレート",
+  "shareTemplate": "共有テンプレート",
   "templatePlaceholder": "例: {{ title }}<br>{{ url }}",
   "exampleToggle": "一例を表示",
   "basicInfo": "基本情報",
@@ -13,5 +13,9 @@
   "pageInfo": "ページ情報",
   "loading": "読み込み中…",
   "copied": "コピーしました",
-  "copyError": "エラー"
+  "copyError": "エラー",
+  "newProfilePlaceholder": "プロファイル名を入力",
+  "newProfileCreate": "作成",
+  "newProfileCancel": "キャンセル",
+  "newProfileDefaultName": "新しいプロファイル"
 }

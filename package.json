@@ -2,7 +2,7 @@
   "name": "sharecane",
   "description": "ブラウザの「共有」ボタンを超えて様々なスタイルで、情報をSNS等へシェア出来るようにするブラウザ拡張",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.2.1",
   "type": "module",
   "scripts": {
     "dev": "wxt",

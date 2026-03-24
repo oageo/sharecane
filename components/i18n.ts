@@ -1,79 +1,17 @@
 // 翻訳機能を提供するモジュール
 
+import jaTranslations from '@/locales/ja.json';
+import enTranslations from '@/locales/en.json';
+
 type Locale = 'ja' | 'en';
-type TranslationKeys = {
-  title: string;
-  shareTemplate: string;
-  templatePlaceholder: string;
-  exampleToggle: string;
-  basicInfo: string;
-  metaInfo: string;
-  ogpInfo: string;
-  twitterCard: string;
-  preview: string;
-  previewPlaceholder: string;
-  copy: string;
-  pageInfo: string;
-  loading: string;
-  copied: string;
-  copyError: string;
-  // プロファイル関連
-  newProfilePlaceholder: string;
-  newProfileCreate: string;
-  newProfileCancel: string;
-  newProfileDefaultName: string;
-};
+type TranslationKeys = typeof jaTranslations;
 
 class I18n {
   private currentLocale: Locale = 'ja';
-  private translations: Map<Locale, TranslationKeys> = new Map();
-
-  constructor() {
-    // デフォルトの翻訳データを設定
-    this.translations.set('ja', {
-      title: 'ShareCane',
-      shareTemplate: '共有テンプレート',
-      templatePlaceholder: '例: {{ title }}<br>{{ url }}',
-      exampleToggle: '一例を表示',
-      basicInfo: '基本情報',
-      metaInfo: 'Metaタグ情報',
-      ogpInfo: 'OGP情報',
-      twitterCard: 'Twitter Card',
-      preview: 'プレビュー',
-      previewPlaceholder: 'テンプレートを入力してください',
-      copy: 'コピー',
-      pageInfo: 'ページ情報',
-      loading: '読み込み中…',
-      copied: 'コピーしました',
-      copyError: 'エラー',
-      newProfilePlaceholder: 'プロファイル名を入力',
-      newProfileCreate: '作成',
-      newProfileCancel: 'キャンセル',
-      newProfileDefaultName: '新しいプロファイル',
-    });
-
-    this.translations.set('en', {
-      title: 'ShareCane',
-      shareTemplate: 'Share Template',
-      templatePlaceholder: 'Example: {{ title }}<br>{{ url }}',
-      exampleToggle: 'Show Examples',
-      basicInfo: 'Basic Info',
-      metaInfo: 'Meta Tags',
-      ogpInfo: 'OGP Info',
-      twitterCard: 'Twitter Card',
-      preview: 'Preview',
-      previewPlaceholder: 'Please enter a template',
-      copy: 'Copy',
-      pageInfo: 'Page Info',
-      loading: 'Loading...',
-      copied: 'Copied!',
-      copyError: 'Error',
-      newProfilePlaceholder: 'Enter profile name',
-      newProfileCreate: 'Create',
-      newProfileCancel: 'Cancel',
-      newProfileDefaultName: 'New Profile',
-    });
-  }
+  private translations: Map<Locale, TranslationKeys> = new Map([
+    ['ja', jaTranslations],
+    ['en', enTranslations],
+  ]);
 
   // ブラウザの言語設定から適切なロケールを検出
   detectLocale(): Locale {

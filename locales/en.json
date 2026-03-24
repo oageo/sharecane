@@ -13,5 +13,9 @@
   "pageInfo": "Page Info",
   "loading": "Loading...",
   "copied": "Copied!",
-  "copyError": "Error"
+  "copyError": "Error",
+  "newProfilePlaceholder": "Enter profile name",
+  "newProfileCreate": "Create",
+  "newProfileCancel": "Cancel",
+  "newProfileDefaultName": "New Profile"
 }
