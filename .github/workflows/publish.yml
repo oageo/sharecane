@@ -4,6 +4,13 @@ on:
   pull_request:
     branches: [main]
     types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      force_publish:
+        description: '強制的にpublishする'
+        required: false
+        default: false
+        type: boolean
 
 # 同じPRに対する重複実行を防ぐ
 concurrency:
@@ -84,7 +91,7 @@ jobs:
     name: 拡張機能をビルドしてパブリッシュ
     runs-on: ubuntu-latest
     needs: check-version
-    if: needs.check-version.outputs.version-changed == 'true'
+    if: needs.check-version.outputs.version-changed == 'true' || github.event.inputs.force_publish == 'true'
     steps:
       - name: コードをチェックアウト
         uses: actions/checkout@v4
@@ -104,7 +111,7 @@ jobs:
           npm run zip:firefox
 
       - name: ブラウザストアに投稿
-        if: github.event.pull_request.merged == true
+        if: github.event.pull_request.merged == true || github.event.inputs.force_publish == 'true'
         run: |
           npx wxt submit \
             --chrome-zip .output/*-chrome.zip \
@@ -123,7 +130,7 @@ jobs:
           FIREFOX_JWT_SECRET: ${{ secrets.FIREFOX_JWT_SECRET }}
 
       - name: ドライラン投稿（テスト用）
-        if: github.event.pull_request.merged != true
+        if: github.event.pull_request.merged != true && github.event.inputs.force_publish != 'true'
         run: |
           npx wxt submit --dry-run \
             --chrome-zip .output/*-chrome.zip \
