@@ -17,13 +17,19 @@ export const CURRENT_STORAGE_VERSION = 1;
  * アプリ起動時（i18n 読み込みより前）に一度だけ呼び出す。
  */
 export async function runMigrations(): Promise<void> {
-  const result = await browser.storage.local.get('storageVersion');
-  const version: number = result.storageVersion ?? 0;
+  try {
+    const result = await browser.storage.local.get('storageVersion');
+    const raw = result.storageVersion;
+    const version: number = typeof raw === 'number' ? raw : 0;
 
-  if (version < 1) await migrateV010toV020();
+    if (version < 1) await migrateV010toV020();
 
-  if (version < CURRENT_STORAGE_VERSION) {
-    await browser.storage.local.set({ storageVersion: CURRENT_STORAGE_VERSION });
+    if (version < CURRENT_STORAGE_VERSION) {
+      await browser.storage.local.set({ storageVersion: CURRENT_STORAGE_VERSION });
+    }
+  } catch (e) {
+    console.error('[migration] failed, clearing storage:', e);
+    await browser.storage.local.clear();
   }
 }
 
