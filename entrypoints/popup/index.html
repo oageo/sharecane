@@ -18,9 +18,28 @@
         
         <div class="field">
           <label class="label" for="template">Loading...</label>
+
+          <!-- プロファイルタブ（JS により動的に生成） -->
+          <div class="tabs is-small mb-2" id="profile-tabs-container">
+            <ul id="profile-tabs"></ul>
+          </div>
+
+          <!-- 新規プロファイル作成フォーム（初期状態は非表示） -->
+          <div id="new-profile-form" class="field has-addons is-hidden">
+            <div class="control is-expanded">
+              <input id="new-profile-name" class="input is-small" type="text" />
+            </div>
+            <div class="control">
+              <button id="confirm-new-profile" class="button is-small is-primary">作成</button>
+            </div>
+            <div class="control">
+              <button id="cancel-new-profile" class="button is-small">キャンセル</button>
+            </div>
+          </div>
+
           <div class="control">
-            <textarea 
-              id="template" 
+            <textarea
+              id="template"
               class="textarea"
               placeholder="Loading..."
               rows="3"
