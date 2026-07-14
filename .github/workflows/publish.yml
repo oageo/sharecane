@@ -1,4 +1,4 @@
-name: 拡張機能パブリッシュ
+name: 拡張機能publish
 
 on:
   pull_request:
