@@ -102,9 +102,14 @@ class ShareCanePopup {
   // -------------------------
 
   /**
-   * プロファイルタブを再描画する。
+   * プロファイルタブとテンプレート入力欄をまとめて再描画する。
    * プロファイルの追加・削除・切り替え後に呼び出す。
    */
+  private refreshProfileUI(): void {
+    this.renderProfileTabs();
+    this.loadActiveProfileTemplate();
+  }
+
   private renderProfileTabs(): void {
     this.profileTabs.textContent = '';
 
@@ -196,8 +201,7 @@ class ShareCanePopup {
   private async handleSwitchProfile(id: string): Promise<void> {
     if (id === this.profileManager.getActiveId()) return;
     await this.profileManager.setActive(id);
-    this.renderProfileTabs();
-    this.loadActiveProfileTemplate();
+    this.refreshProfileUI();
   }
 
   private async handleDeleteProfile(id: string): Promise<void> {
@@ -211,8 +215,7 @@ class ShareCanePopup {
       await this.profileManager.create(i18n.t('newProfileDefaultName'));
     }
     await this.profileManager.delete(id);
-    this.renderProfileTabs();
-    this.loadActiveProfileTemplate();
+    this.refreshProfileUI();
   }
 
   // -------------------------
@@ -233,8 +236,7 @@ class ShareCanePopup {
     const name = this.newProfileNameInput.value.trim();
     if (!name) return;
     await this.profileManager.create(name);
-    this.renderProfileTabs();
-    this.loadActiveProfileTemplate();
+    this.refreshProfileUI();
     this.hideNewProfileForm();
   }
 

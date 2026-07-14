@@ -1,11 +1,15 @@
 # sharecane - share addon can editable
 ![GitHub License](https://img.shields.io/github/license/oageo/sharecane)
-
+![Mozilla Add-on Downloads](https://img.shields.io/amo/dw/sharecane?link=https%3A%2F%2Faddons.mozilla.org%2Fsl%2Ffirefox%2Faddon%2Fsharecane%2F)
 ## 特徴
 ブラウザの「共有」ボタンを超えて様々なスタイルで、情報をSNS等へシェア出来るようになります
 
 * [mustache記法](https://mustache.github.io/)を用いたシンプルなテンプレートを作成できます。例示を見るだけですぐにテンプレートの作り方が理解できるでしょう。
 * 多言語に対応しております。現在は日本語と英語に対応しており、万が一翻訳テキストが存在しない場合は日本語にフォールバックするようになっております。
+
+## ダウンロード
+* [Chromeウェブストア](https://chromewebstore.google.com/detail/sharecane/pijkmpapeijjjbcmkgibokcngpidcehc?pli=1)
+* [Mozilla Add-Ons](https://addons.mozilla.org/ja/firefox/addon/sharecane/)
 
 ## 例
 以下のようなWebサイトの場合を考えます。URLは`https://www.osumiakari.jp/articles/20250729-yamadalinesuspension/`とします。
